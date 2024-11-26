@@ -1,1 +1,3 @@
 nodejs_service/node_modules/
+nodejs_service/.env
+flask_service/.env

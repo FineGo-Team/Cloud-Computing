@@ -73,7 +73,7 @@ const getMonthlyReport = async (userId) => {
     };
 
     // TODO: Fill the Flask Endpoint URL
-    const flaskEndpoint = "";
+    const flaskEndpoint = "http://127.0.0.1:5000/monthly_report";
     const response = await axios.post(flaskEndpoint, inputDate);
     const result = response.data;
 

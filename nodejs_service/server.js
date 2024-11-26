@@ -1,9 +1,8 @@
 require("dotenv").config();
 const Hapi = require("@hapi/hapi");
-
 // Initialize Routes Module
 const authRoutes = require("./src/routes/authRoutes");
-const userRoutes = require("./src/routes/authRoutes");
+const userRoutes = require("./src/routes/userRoutes");
 const budgetPlanRoutes = require("./src/routes/budgetRoutes");
 const monthlyReportRoutes = require("./src/routes/reportRoutes");
 const transactionRoutes = require("./src/routes/transactionRoutes");
@@ -13,8 +12,8 @@ const { scheduledTask } = require("./src/service/function");
 
 const init = async () => {
   const server = Hapi.server({
-    port: process.env.PORT || 3000,
-    host: "localhost",
+    port: 8080,
+    host: "0.0.0.0",
   });
 
   const routes = [...authRoutes, ...userRoutes, ...budgetPlanRoutes, ...monthlyReportRoutes, ...transactionRoutes];
@@ -25,7 +24,7 @@ const init = async () => {
   await server.start();
   console.log(`Server running on ${server.info.uri}`);
 
-  scheduledTask();
+  scheduledTask;
 };
 
 process.on("unhandledRejection", (err) => {

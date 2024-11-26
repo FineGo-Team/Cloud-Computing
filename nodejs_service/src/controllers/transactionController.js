@@ -32,10 +32,11 @@ const getTransactions = async (request, h) => {
 
   try {
     const transactionsSnapshot = await db.collection("users").doc(userId).collection("transactions").get();
-    const transactions = {};
+    console.log("Transaction Data:", transactionsSnapshot);
+    const transactions = [];
 
     transactionsSnapshot.forEach((doc) => {
-      transactions.push({ id: doc.id, ...data() });
+      transactions.push(doc.data());
     });
 
     return h
@@ -45,6 +46,7 @@ const getTransactions = async (request, h) => {
       })
       .code(200);
   } catch (err) {
+    console.log("message: " + err.message);
     return h
       .response({
         status: "error",

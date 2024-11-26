@@ -8,7 +8,7 @@ const userRoutes = [
   },
   {
     method: "POST",
-    path: "/user/{id}/input-user-info",
+    path: "/user/{id}/input-profile",
     handler: userController.inputUserInfo,
   },
 ];

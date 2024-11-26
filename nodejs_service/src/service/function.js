@@ -1,7 +1,7 @@
 const cron = require("node-cron");
 const { db } = require("../utils/firebase");
-const { getBudgetPlanPrediction } = require("./budgetController");
-const { generateMonthlyReport } = require("./monthlyReportController");
+const { getBudgetPlanPrediction } = require("../controllers/budgetController");
+const { generateMonthlyReport } = require("../controllers/reportController");
 
 const scheduleTasks = () => {
   // Scheduling for Monthly report Prediction

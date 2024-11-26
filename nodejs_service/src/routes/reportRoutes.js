@@ -1,10 +1,10 @@
-const monthlyReportController = require("../controllers/reportController");
+const monthlyReportHandler = require("../controllers/reportController");
 
 const monthlyReportRoutes = [
   {
     method: "GET",
     path: "/user/{id}/monthly-report",
-    handler: monthlyReportController.monthlyReportHandler,
+    handler: monthlyReportHandler,
   },
 ];
 

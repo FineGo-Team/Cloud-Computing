@@ -4,19 +4,22 @@ const { getUserAge } = require("../service/function");
 
 const getBudgetPlanPrediction = async (userId) => {
   try {
+    // Mengambil data profile dari Firestore
     const profileDoc = await db.collection("users").doc(userId).collection("profile").doc("details").get();
+    // Mengambil data expense dari Firestore
     const expenseDoc = await db.collection("users").doc(userId).collection("expense").doc("details").get();
 
     if (!profileDoc.exists || !expenseDoc.exists) {
       console.log("Profile or Expense not found");
-      return;
+      return { error: "Profile or Expense not found" };
     }
 
     const profile = profileDoc.data();
-    const expense = profileDoc.data();
+    const expense = expenseDoc.data();
     const age = profile ? getUserAge(profile.birth_date) : null;
     const province = profile ? profile.province : null;
 
+    // Menyiapkan data untuk prediksi
     let inputData = {
       age: age,
       province: province,
@@ -29,57 +32,26 @@ const getBudgetPlanPrediction = async (userId) => {
       debt: expense ? expense.debt : null,
     };
 
-    const transactionsSnapshot = await db
-      .collection("users")
-      .doc(userId)
-      .collection("transactions")
-      .where("date", ">=", new Date(new Date().setDate(1)))
-      .where("date", "<=", new Date(new Date()))
-      .get();
-
-    if (!transactionsSnapshot.empty) {
-      let totalTransactions = {
-        transportation: 0,
-        housing_cost: 0,
-        electricity_bill: 0,
-        water_bill: 0,
-        internet_bill: 0,
-        debt: 0,
-      };
-
-      transactionsSnapshot.forEach((doc) => {
-        const transaction = doc.data();
-        totalTransactions.transportation += transaction.transportation || 0;
-        totalTransactions.housing_cost += transaction.housing_cost || 0;
-        totalTransactions.electricity_bill += transaction.electricity_bill || 0;
-        totalTransactions.water_bill += transaction.water_bill || 0;
-        totalTransactions.internet_bill += transaction.internet_bill || 0;
-        totalTransactions.debt += transaction.debt || 0;
-      });
-
-      inputData = {
-        age: age,
-        province: province,
-        ...totalTransactions,
-      };
-    }
-
-    // TODO: Input Flask Service URL Endpoint
-    const flaskService = "";
-    const response = await axios.post(flaskService, { inputData: inputData });
+    // Mengirim data ke Flask service untuk mendapatkan prediksi
+    const flaskService = "http://127.0.0.1:5000/budget_plan";
+    const response = await axios.post(flaskService, { inputData });
     const prediction = response.data;
 
+    // Menyimpan hasil prediksi ke Firestore
     await db
       .collection("users")
       .doc(userId)
       .collection("predictions")
       .doc("budget_plan")
-      .update({
-        predictions: db.firestore.FieldValue.arrayUnion({
-          date: new Date().toISOString(),
-          ...prediction,
-        }),
-      });
+      .set(
+        {
+          predictions: db.firestore.FieldValue.arrayUnion({
+            date: new Date().toISOString(),
+            ...prediction,
+          }),
+        },
+        { merge: true }
+      );
 
     console.log("Prediction Saved: ", prediction);
     return prediction;
@@ -89,30 +61,11 @@ const getBudgetPlanPrediction = async (userId) => {
   }
 };
 
-const getPredictionFromDatabase = async (userId) => {
-  try {
-    const budgetPlanDoc = await db.collection("users").doc(userId).collection("predictions").doc("budget_plan").get();
-    const budgetPlan = budgetPlanDoc.data().predictions;
-
-    if (!budgetPlan.exists || budgetPlan.length === 0) {
-      const prediction = await getBudgetPlanPrediction(userId);
-      return prediction;
-    }
-
-    const latestBudgetPlan = budgetPlan[budgetPlan.length - 1];
-    return latestBudgetPlan;
-  } catch (err) {
-    return {
-      error: "Failed to retrieve budget plan from database",
-    };
-  }
-};
-
 const budgetPlanHandler = async (request, h) => {
   const userId = request.params.id;
 
   try {
-    const prediction = await getPredictionFromDatabase(userId);
+    const prediction = await getBudgetPlanPrediction(userId);
     if (prediction.error) {
       return h
         .response({
@@ -138,4 +91,4 @@ const budgetPlanHandler = async (request, h) => {
   }
 };
 
-module.exports = { budgetPlanHandler };
+module.exports = { budgetPlanHandler, getBudgetPlanPrediction };
