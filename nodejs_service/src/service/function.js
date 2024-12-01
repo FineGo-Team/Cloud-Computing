@@ -1,30 +1,3 @@
-const cron = require("node-cron");
-const { db } = require("../utils/firebase");
-const { getBudgetPlanPrediction } = require("../controllers/budgetController");
-const { generateMonthlyReport } = require("../controllers/reportController");
-
-const scheduleTasks = () => {
-  // Scheduling for Monthly report Prediction
-  cron.schedule("0 0 0 L * *", async () => {
-    console.log("Running scheduled task for Monthly Report");
-
-    const usersSnapshot = await db.collection("users").get();
-    usersSnapshot.forEach(async (userDoc) => {
-      await generateMonthlyReport(userDoc.id);
-    });
-  });
-
-  // Scheduling For Budget Plan Predictions
-  cron.schedule("0 0 1 * *", async () => {
-    console.log("Running schedule Task");
-
-    const usersSnapshot = await db.collection("users").get();
-    usersSnapshot.forEach((userDoc) => {
-      getBudgetPlanPrediction(userDoc.id);
-    });
-  });
-};
-
 // Get User age For Calculate Prediction
 const getUserAge = (birthdate) => {
   const birthDate = new Date(birthdate);
@@ -37,4 +10,4 @@ const getUserAge = (birthdate) => {
   return age;
 };
 
-module.exports = { getUserAge, scheduleTasks };
+module.exports = getUserAge;

@@ -1,4 +1,4 @@
-const budgetPlanController = require("../controllers/budgetController");
+const budgetPlanController = require("../controllers/budgetPlanController");
 
 const budgetPlanRoutes = [
   {

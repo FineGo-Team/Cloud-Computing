@@ -1,4 +1,4 @@
-const monthlyReportHandler = require("../controllers/reportController");
+const { monthlyReportHandler } = require("../controllers/reportController");
 
 const monthlyReportRoutes = [
   {

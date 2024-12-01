@@ -33,22 +33,29 @@ const registerHandler = async (request, h) => {
 
 // Login Handler
 const loginHandler = async (request, h) => {
-  const idToken = request.headers.authorization.split("Bearer ")[1];
+  const { email, password } = request.payload;
 
   try {
-    // Verifikasi token ID menggunakan Firebase Admin SDK
-    const decodedToken = await admin.auth().verifyIdToken(idToken);
-    const userId = decodedToken.uid;
+    // Authentication user by using email
+    const user = await admin.auth().getUserByEmail(email);
 
-    // Mengambil data user dari Firestore
-    const userDoc = await db.collection("users").doc(userId).get();
-    if (!userDoc.exists) {
-      return h.response({ error: "User not found" }).code(404);
-    }
+    // Create Token for User
+    const token = await admin.auth().createCustomToken(user.uid);
 
-    return h.response({ message: "Login successful", uid: userId }).code(200);
+    return h
+      .response({
+        status: "success",
+        message: "Login successful",
+        token,
+      })
+      .code(200);
   } catch (error) {
-    return h.response({ error: "Invalid token" }).code(401);
+    return h
+      .response({
+        status: "error",
+        message: error.message,
+      })
+      .code(401);
   }
 };
 

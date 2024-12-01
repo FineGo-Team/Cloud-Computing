@@ -23,8 +23,6 @@ const init = async () => {
 
   await server.start();
   console.log(`Server running on ${server.info.uri}`);
-
-  scheduledTask;
 };
 
 process.on("unhandledRejection", (err) => {

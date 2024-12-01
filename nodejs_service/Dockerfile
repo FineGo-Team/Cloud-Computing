@@ -1,20 +1,20 @@
-# Gunakan gambar Node.js resmi sebagai gambar dasar
+# Used Node.js 
 FROM node:22
 
-# Buat dan berpindah ke direktori aplikasi
+# Create Workdir for Application
 WORKDIR /usr/src/app
 
-# Salin package.json dan package-lock.json ke WORKDIR
+# Copy package.json and package-lock.json to WORKDIR
 COPY package*.json ./
 
-# Instal dependensi
+# Instal Dependencies
 RUN npm install
 
-# Salin seluruh kode aplikasi ke WORKDIR
+# Copy All code to WORKDIR
 COPY . .
 
-# Tampilkan port yang digunakan oleh aplikasi
+# Expose port used by Application
 EXPOSE 8080
 
-# Tentukan perintah untuk menjalankan aplikasi
-CMD ["node", "server.js"]
+# Command run Application
+CMD ["npm", "run", "start"]

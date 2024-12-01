@@ -18,10 +18,30 @@ const getUserProfile = async (request, h) => {
     }
 
     const userData = userDoc.data();
+
+    // GET the most recent income document from Firestore
+    const incomeQuerySnapshot = await db.collection("users").doc(userId).collection("income").orderBy("timestamp", "desc").limit(1).get();
+
+    let totalIncome = 0;
+    let savings = 0;
+
+    incomeQuerySnapshot.forEach((doc) => {
+      totalIncome = doc.data().total_income;
+      savings = doc.data().savings;
+    });
+
+    const profileData = {
+      ...userData,
+      income: totalIncome,
+      savings,
+    };
+
     return h
       .response({
         status: "success",
-        data: userData,
+        data: {
+          profileData,
+        },
       })
       .code(200);
   } catch (error) {
@@ -37,17 +57,43 @@ const getUserProfile = async (request, h) => {
 // Input User Information and Expenses
 const inputUserInfo = async (request, h) => {
   const userId = request.params.id;
-  const { profile, expense } = request.payload;
+  const { profile, expenses, income } = request.payload;
+
+  // Dapatkan bulan saat ini
+  const currentMonth = new Date().toISOString().slice(0, 7); // Format YYYY-MM
+
+  // Fungsi untuk memastikan data adalah objek JavaScript murni
+  const ensurePlainObject = (data) => {
+    return JSON.parse(
+      JSON.stringify(data, (key, value) => {
+        return value === undefined ? null : value; // Ganti undefined dengan null
+      })
+    );
+  };
+
+  const expensesData = {
+    ...expenses,
+    timestamp: new Date().toISOString(),
+  };
+  const incomeData = {
+    ...income,
+    timestamp: new Date().toISOString(),
+  };
 
   try {
-    // Insert User Information and User Expenses to Firestore
-    await db.collection("users").doc(userId).collection("profile").doc("details").set(profile, { merge: true });
-    await db.collection("users").doc(userId).collection("expense").doc("details").set(expense);
+    // Insert User Information to Firestore
+    await db.collection("users").doc(userId).collection("profile").doc("details").set(ensurePlainObject(profile), { merge: true });
+
+    // Insert User Expenses to Firestore
+    await db.collection("users").doc(userId).collection("expenses").doc(currentMonth).set(ensurePlainObject(expensesData), { merge: true });
+
+    // Insert User Income to Firestore
+    await db.collection("users").doc(userId).collection("income").doc(currentMonth).set(ensurePlainObject(incomeData), { merge: true });
 
     return h
       .response({
         status: "success",
-        message: "User profile and expense data saved successfully",
+        message: "User profile, expenses, and income data saved successfully",
       })
       .code(201);
   } catch (err) {
