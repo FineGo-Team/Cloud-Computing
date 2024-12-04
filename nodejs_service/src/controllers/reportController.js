@@ -1,6 +1,6 @@
 const axios = require("axios");
 const { db } = require("../utils/firebase");
-const getUserAge = require("../service/function");
+const { getUserAge } = require("../service/function");
 const { FieldValue } = require("firebase-admin").firestore;
 
 // Handler to Send Request to Model API Server
@@ -14,7 +14,7 @@ const getMonthlyReport = async (userId) => {
     }
 
     const profile = profileDoc.data();
-    const age = profile ? getUserAge(profile.birth_date) : null;
+    const age = profile ? getUserAge(profile.birthdate) : null;
 
     let food_expenses = 0;
     let transportation_expenses = 0;
@@ -31,26 +31,38 @@ const getMonthlyReport = async (userId) => {
     const monthlyDocRef = await db.collection("users").doc(userId).collection("monthly_transactions").doc(currentMonthStr).get();
 
     if (!monthlyDocRef.exists || !monthlyDocRef.data().transactions) {
-      console.log("No transactions found for the specified month.");
-      return;
+      const expenseQuerySnapshot = await db.collection("users").doc(userId).collection("expenses").orderBy("timestamp", "desc").limit(1).get();
+      const incomeQuerySnapshot = await db.collection("users").doc(userId).collection("income").orderBy("timestamp", "desc").limit(1).get();
+
+      const userExpense = expenseQuerySnapshot.empty ? {} : expenseQuerySnapshot.docs[0].data();
+      const userIncome = incomeQuerySnapshot.empty ? {} : incomeQuerySnapshot.docs[0].data();
+
+      food_expenses = userExpense.food_expenses || 0;
+      transportation_expenses = userExpense.transportation_expenses || 0;
+      housing_cost = userExpense.housing_cost || 0;
+      electricity_bill = userExpense.electricity_bill || 0;
+      water_bill = userExpense.water_bill || 0;
+      internet_cost = userExpense.internet_cost || 0;
+      debt = userExpense.debt || 0;
+      income = userIncome.total_income || 0;
+    } else {
+      const transactions = monthlyDocRef.data().transactions;
+
+      // Calculate transaction amount user In This month
+      transactions.forEach((transaction) => {
+        if (transaction.type === "income") {
+          income += transaction.amount || 0;
+        } else if (transaction.type === "expense") {
+          if (transaction.category === "food_expenses") food_expenses += transaction.amount || 0;
+          if (transaction.category === "transportation_expenses") transportation_expenses += transaction.amount || 0;
+          if (transaction.category === "housing_cost") housing_cost += transaction.amount || 0;
+          if (transaction.category === "electricity_bill") electricity_bill += transaction.amount || 0;
+          if (transaction.category === "water_bill") water_bill += transaction.amount || 0;
+          if (transaction.category === "internet_cost") internet_cost += transaction.amount || 0;
+          if (transaction.category === "debt") debt += transaction.amount || 0;
+        }
+      });
     }
-
-    const transactions = monthlyDocRef.data().transactions;
-
-    // Calculate transaction amount user In This month
-    transactions.forEach((transaction) => {
-      if (transaction.type === "income") {
-        income += transaction.amount || 0;
-      } else if (transaction.type === "expense") {
-        if (transaction.category === "food_expenses") food_expenses += transaction.amount || 0;
-        if (transaction.category === "transportation_expenses") transportation_expenses += transaction.amount || 0;
-        if (transaction.category === "housing_cost") housing_cost += transaction.amount || 0;
-        if (transaction.category === "electricity_bill") electricity_bill += transaction.amount || 0;
-        if (transaction.category === "water_bill") water_bill += transaction.amount || 0;
-        if (transaction.category === "internet_cost") internet_cost += transaction.amount || 0;
-        if (transaction.category === "debt") debt += transaction.amount || 0;
-      }
-    });
 
     const total_expenses = food_expenses + transportation_expenses + housing_cost + electricity_bill + water_bill + internet_cost + debt;
     const savings = income - total_expenses;
@@ -83,7 +95,9 @@ const getMonthlyReport = async (userId) => {
       savings,
     };
 
-    const flaskEndpoint = "http://127.0.0.1:5000/monthly_report";
+    console.log(inputData);
+
+    const flaskEndpoint = "https://model-api-196246270808.asia-southeast2.run.app/monthly_report";
     const response = await axios.post(flaskEndpoint, { inputData });
     const result = response.data;
 
@@ -153,7 +167,7 @@ const monthlyReportHandler = async (request, h) => {
     }
 
     // Sort and Take User New Reports
-    reports.sort((a, b) => new Date(b.date._seconds * 1000) - new Date(a.date._seconds * 1000));
+    reports.sort((a, b) => new Date(b.date) - new Date(a.date));
     const latestReport = reports[0];
 
     return h

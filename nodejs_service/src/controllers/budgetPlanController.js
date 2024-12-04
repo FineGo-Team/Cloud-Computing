@@ -1,19 +1,24 @@
-const { db, firestore } = require("../utils/firebase");
+const { db } = require("../utils/firebase");
 const axios = require("axios");
-const getUserAge = require("../service/function");
+const { getUserAge } = require("../service/function");
 const { FieldValue } = require("firebase-admin").firestore;
+const { monthlyReportHandler, getMonthlyReport } = require("./reportController");
 
 // Function to Send Request to model API endpoint to get Budget Planning
-const getBudgetPlanPrediction = async (userId) => {
+const getBudgetPlanPrediction = async (userId, h) => {
   try {
     // Take Data User Profile, Income, Expenses, and Monthly Report from Firestore
     const profileDoc = await db.collection("users").doc(userId).collection("profile").doc("details").get();
     const expenseQuerySnapshot = await db.collection("users").doc(userId).collection("expenses").orderBy("timestamp", "desc").limit(1).get();
     const incomeQuerySnapshot = await db.collection("users").doc(userId).collection("income").orderBy("timestamp", "desc").limit(1).get();
-    const monthlyReportDoc = await db.collection("users").doc(userId).collection("predictions").doc("monthly_report").get();
+    let monthlyReportDoc = await db.collection("users").doc(userId).collection("predictions").doc("monthly_report").get();
 
-    if (!profileDoc.exists || expenseQuerySnapshot.empty || incomeQuerySnapshot.empty || !monthlyReportDoc.exists) {
+    if (!profileDoc.exists || expenseQuerySnapshot.empty || incomeQuerySnapshot.empty) {
       return { error: "Profile, Expense, Income, or Monthly Report not found" };
+    } else if (!monthlyReportDoc.exists) {
+      await getMonthlyReport(userId);
+      // Ambil kembali dokumen monthly_report setelah handler dijalankan
+      monthlyReportDoc = await db.collection("users").doc(userId).collection("predictions").doc("monthly_report").get();
     }
 
     // Get Last Data User Profile, Income, Expenses, and Monthly Report from Firestore
@@ -22,13 +27,13 @@ const getBudgetPlanPrediction = async (userId) => {
     const income = incomeQuerySnapshot.docs[0].data();
     const reports = monthlyReportDoc.data().reports || [];
 
-    // Urutkan array `reports` berdasarkan tanggal
+    // Sort Array of from the date
     reports.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    // Ambil laporan terbaru
+    // Take The new report
     const latestReport = reports[0];
 
-    const age = getUserAge(profile.birth_date);
+    const age = getUserAge(profile.birthdate);
     const province = profile.province.toUpperCase();
 
     // Initialize Input Data for Model Machine Learning
@@ -46,12 +51,12 @@ const getBudgetPlanPrediction = async (userId) => {
       savings: income.savings || 0,
     };
 
-    const flaskService = "http://127.0.0.1:5000/budget_plan";
+    const flaskService = "https://model-api-196246270808.asia-southeast2.run.app/budget_plan";
     const response = await axios.post(flaskService, { inputData });
     const prediction = response.data;
 
-    // Calculate the Budget Plan based on User's Financial Report
     if (latestReport && latestReport.prediction !== "sehat") {
+      // Calculate the Budget Plan based on User's Financial Report
       expense.food_expenses = expense.food_expenses > 300000 ? expense.food_expenses * 0.98 : expense.food_expenses;
       expense.transportation_expenses = expense.transportation_expenses > 400000 ? expense.transportation_expenses * 0.93 : expense.transportation_expenses;
       expense.water_bill = expense.water_bill > 50000 ? expense.water_bill * 0.95 : expense.water_bill;
@@ -115,7 +120,7 @@ const budgetPlanHandler = async (request, h) => {
     }
 
     // If in this month prediction is empty get prediction from getBudgetPlanPrediction
-    const prediction = await getBudgetPlanPrediction(userId);
+    const prediction = await getBudgetPlanPrediction(userId, h);
     if (prediction.error) {
       return h
         .response({

@@ -10,4 +10,10 @@ const getUserAge = (birthdate) => {
   return age;
 };
 
-module.exports = getUserAge;
+const convertToISOString = (date) => {
+  const [day, month, year] = date.split("/");
+  const dateObject = new Date(year, month - 1, day);
+  return dateObject.toISOString().slice(0, 10);
+};
+
+module.exports = { getUserAge, convertToISOString };

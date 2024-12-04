@@ -1,4 +1,5 @@
 const { db } = require("../utils/firebase");
+const { convertToISOString } = require("../service/function");
 
 // GET user personal information
 const getUserProfile = async (request, h) => {
@@ -48,7 +49,7 @@ const getUserProfile = async (request, h) => {
     return h
       .response({
         status: "failed",
-        message: "Failed to get user profile",
+        message: `Failed to get user profile: ${error.message}`,
       })
       .code(500);
   }
@@ -59,17 +60,22 @@ const inputUserInfo = async (request, h) => {
   const userId = request.params.id;
   const { profile, expenses, income } = request.payload;
 
-  // Dapatkan bulan saat ini
-  const currentMonth = new Date().toISOString().slice(0, 7); // Format YYYY-MM
+  // Get Current Month
+  const currentMonth = new Date().toISOString().slice(0, 7);
 
-  // Fungsi untuk memastikan data adalah objek JavaScript murni
+  // Function for check JavaScript Object validity
   const ensurePlainObject = (data) => {
     return JSON.parse(
       JSON.stringify(data, (key, value) => {
-        return value === undefined ? null : value; // Ganti undefined dengan null
+        return value === undefined ? null : value;
       })
     );
   };
+
+  // Convert birth date to ISO String and Format YYYY-MM-DD
+  if (profile.birthdate) {
+    profile.birthdate = convertToISOString(profile.birthdate);
+  }
 
   const expensesData = {
     ...expenses,
@@ -100,7 +106,7 @@ const inputUserInfo = async (request, h) => {
     return h
       .response({
         status: "failed",
-        message: err.message,
+        message: `Failed to input user information: ${err.message}`,
       })
       .code(500);
   }
