@@ -41,7 +41,7 @@ const getBudgetPlanPrediction = async (userId) => {
       housing_cost: expense.housing_cost || 0,
       electricity_bill: expense.electricity_bill || 0,
       water_bill: expense.water_bill || 0,
-      internet_bill: expense.internet_bill || 0,
+      internet_cost: expense.internet_cost || 0,
       debt: expense.debt || 0,
       savings: income.savings || 0,
     };
@@ -56,7 +56,7 @@ const getBudgetPlanPrediction = async (userId) => {
       expense.transportation_expenses = expense.transportation_expenses > 400000 ? expense.transportation_expenses * 0.93 : expense.transportation_expenses;
       expense.water_bill = expense.water_bill > 50000 ? expense.water_bill * 0.95 : expense.water_bill;
       expense.electricity_bill = expense.electricity_bill > 100000 ? expense.electricity_bill * 0.92 : expense.electricity_bill;
-      expense.internet_bill = expense.internet_bill !== 0 ? expense.internet_bill * 0.9 : expense.internet_bill;
+      expense.internet_cost = expense.internet_cost !== 0 ? expense.internet_cost * 0.9 : expense.internet_cost;
       expense.debt = expense.debt !== 0 ? expense.debt * 0.9 : expense.debt;
     }
 

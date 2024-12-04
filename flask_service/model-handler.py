@@ -65,7 +65,7 @@ def budget_plan_prediction():
         data = request.json['inputData']
         logging.info(f"Received input data: {data}")
 
-        required_fields = ['province', 'age', 'income', 'food_expenses', 'transportation_expenses', 'housing_cost', 'electricity_bill', 'water_bill', 'internet_bill', 'debt', 'savings']
+        required_fields = ['province', 'age', 'income', 'food_expenses', 'transportation_expenses', 'housing_cost', 'electricity_bill', 'water_bill', 'internet_cost', 'debt', 'savings']
         for field in required_fields:
             if field not in data:
                 raise ValueError(f"Missing required field: {field}")
@@ -77,7 +77,7 @@ def budget_plan_prediction():
         input_data = np.array([[
             province_encoded, data['age'], data['income'], data['food_expenses'],
             data['transportation_expenses'], data['housing_cost'], data['electricity_bill'],
-            data['water_bill'], data['internet_bill'], data['debt'], data['savings']
+            data['water_bill'], data['internet_cost'], data['debt'], data['savings']
         ]])
 
         # Make the prediction using the model
@@ -97,7 +97,7 @@ def monthly_report_prediction():
     try:
         data = request.json['inputData']
 
-        required_fields = ['province', 'age', 'income', 'food_expenses', 'transportation_expenses', 'housing_cost', 'electricity_bill', 'water_bill', 'internet_bill', 'debt', 'savings']
+        required_fields = ['province', 'age', 'income', 'food_expenses', 'transportation_expenses', 'housing_cost', 'electricity_bill', 'water_bill', 'internet_cost', 'debt', 'savings']
         for field in required_fields:
             if field not in data:
                 raise ValueError(f"Missing required field: {field}")
@@ -109,7 +109,7 @@ def monthly_report_prediction():
         input_data = np.array([[
             province_encoded, data['age'], data['income'], data['food_expenses'],
             data['transportation_expenses'], data['housing_cost'], data['electricity_bill'],
-            data['water_bill'], data['internet_bill'], data['debt'], data['savings']
+            data['water_bill'], data['internet_cost'], data['debt'], data['savings']
         ]])
 
         # Make the prediction using the model

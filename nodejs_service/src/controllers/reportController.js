@@ -21,7 +21,7 @@ const getMonthlyReport = async (userId) => {
     let housing_cost = 0;
     let electricity_bill = 0;
     let water_bill = 0;
-    let internet_bill = 0;
+    let internet_cost = 0;
     let debt = 0;
     let income = 0;
 
@@ -47,12 +47,12 @@ const getMonthlyReport = async (userId) => {
         if (transaction.category === "housing_cost") housing_cost += transaction.amount || 0;
         if (transaction.category === "electricity_bill") electricity_bill += transaction.amount || 0;
         if (transaction.category === "water_bill") water_bill += transaction.amount || 0;
-        if (transaction.category === "internet_bill") internet_bill += transaction.amount || 0;
+        if (transaction.category === "internet_cost") internet_cost += transaction.amount || 0;
         if (transaction.category === "debt") debt += transaction.amount || 0;
       }
     });
 
-    const total_expenses = food_expenses + transportation_expenses + housing_cost + electricity_bill + water_bill + internet_bill + debt;
+    const total_expenses = food_expenses + transportation_expenses + housing_cost + electricity_bill + water_bill + internet_cost + debt;
     const savings = income - total_expenses;
 
     // Categorizing for user Highest Expenses
@@ -62,7 +62,7 @@ const getMonthlyReport = async (userId) => {
       { category: "housing_cost", amount: housing_cost },
       { category: "electricity_bill", amount: electricity_bill },
       { category: "water_bill", amount: water_bill },
-      { category: "internet_bill", amount: internet_bill },
+      { category: "internet_cost", amount: internet_cost },
       { category: "debt", amount: debt },
     ];
 
@@ -78,7 +78,7 @@ const getMonthlyReport = async (userId) => {
       housing_cost,
       water_bill,
       electricity_bill,
-      internet_bill,
+      internet_cost,
       debt,
       savings,
     };
@@ -122,7 +122,7 @@ const getMonthlyReport = async (userId) => {
         housing_cost,
         water_bill,
         electricity_bill,
-        internet_bill,
+        internet_cost,
         debt,
         timestamp: new Date().toISOString(),
       },
