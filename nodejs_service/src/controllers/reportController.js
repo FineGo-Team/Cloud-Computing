@@ -153,15 +153,16 @@ const getMonthlyReport = async (userId) => {
 const monthlyReportHandler = async (request, h) => {
   const userId = request.params.id;
   try {
-    const reportDoc = await db.collection("users").doc(userId).collection("predictions").doc("monthly_report").get();
+    let reportDoc = await db.collection("users").doc(userId).collection("predictions").doc("monthly_report").get();
     const reports = reportDoc.exists ? reportDoc.data().reports || [] : [];
 
     if (!reportDoc.exists || reports.length === 0) {
-      const report = await getMonthlyReport(userId);
+      await getMonthlyReport(userId);
+      reportDoc = await db.collection("users").doc(userId).collection("predictions").doc("monthly_report").get();
+      const report = reports[0];
       return h
         .response({
           finance_report: report,
-          highest_expenses: report.highest_expenses,
         })
         .code(201);
     }
@@ -173,7 +174,6 @@ const monthlyReportHandler = async (request, h) => {
     return h
       .response({
         finance_report: latestReport,
-        highest_expenses: latestReport.highest_expenses,
       })
       .code(200);
   } catch (error) {

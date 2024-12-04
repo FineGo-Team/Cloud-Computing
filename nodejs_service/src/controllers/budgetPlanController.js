@@ -96,7 +96,7 @@ const budgetPlanHandler = async (request, h) => {
   const currentMonth = new Date().toISOString().slice(0, 7);
 
   try {
-    const predictionDoc = await db.collection("users").doc(userId).collection("predictions").doc("budget_plan").get();
+    let predictionDoc = await db.collection("users").doc(userId).collection("predictions").doc("budget_plan").get();
 
     // Check Predictions Existing for this Month
     if (predictionDoc.exists) {
@@ -120,7 +120,9 @@ const budgetPlanHandler = async (request, h) => {
     }
 
     // If in this month prediction is empty get prediction from getBudgetPlanPrediction
-    const prediction = await getBudgetPlanPrediction(userId, h);
+    await getBudgetPlanPrediction(userId, h);
+    predictionDoc = await db.collection("users").doc(userId).collection("predictions").doc("budget_plan").get();
+    const prediction = predictionDoc.data();
     if (prediction.error) {
       return h
         .response({
