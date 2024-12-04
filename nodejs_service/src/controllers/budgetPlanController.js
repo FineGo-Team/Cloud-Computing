@@ -62,6 +62,7 @@ const getBudgetPlanPrediction = async (userId) => {
 
     // Create Copy of expense field timestamp
     const { date, timestamp, ...budget_plan } = expense;
+    const monthlyLimit = income.total_income * (100 - prediction.savings_rate);
 
     await db
       .collection("users")
@@ -72,6 +73,7 @@ const getBudgetPlanPrediction = async (userId) => {
         {
           date: new Date().toISOString(),
           ...prediction,
+          monthly_limit: monthlyLimit,
           budget_plan,
         },
         { merge: true }
