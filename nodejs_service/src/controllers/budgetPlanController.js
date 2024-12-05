@@ -67,7 +67,7 @@ const getBudgetPlanPrediction = async (userId, h) => {
 
     // Create Copy of expense field timestamp
     const { date, timestamp, ...budget_plan } = expense;
-    const monthlyLimit = income.total_income * (prediction.savings_rate / 100);
+    const monthlyLimit = income.total_income * (1 - prediction.savings_rate / 100);
 
     await db
       .collection("users")
